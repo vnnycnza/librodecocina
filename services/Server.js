@@ -58,7 +58,7 @@ class Server {
       }
     });
 
-    this._app.post(`/webhook/${this._token}`, (req, res) => {
+    this._app.post(`/webhook/${this._token}`, async (req, res) => {
       this._bot.processUpdate(req.body);
 
       return res.sendStatus(200);

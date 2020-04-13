@@ -82,6 +82,10 @@ class Bot {
     });
   }
 
+  async processUpdate(request) {
+    return this._bot.processUpdate(request);
+  }
+
   async _sendNoResultsFound(recipient) {
     pino.info('[Bot] No results found. Successfully sent message.');
     const message =

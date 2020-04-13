@@ -37,7 +37,11 @@ async function main() {
     validateConfig(config);
 
     const reddit = new Reddit(config.reddit);
+    reddit.init();
+
     const bot = new Bot({ ...config.app, ...config.bot }, { reddit });
+    bot.init();
+
     const server = new Server(
       { ...config.app, ...config.bot },
       { reddit, bot },
