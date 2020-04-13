@@ -37,7 +37,14 @@ class Bot {
       this._bot = new TelegramBot(this._token, { polling: true });
     }
 
-    this._bot.on('text', async msg => {
+    this._bot.onText(/\/help/, async msg => {
+      const reply = Bot._getHelpMessage();
+      await this._bot.sendMessage(msg.chat.id, reply, {
+        parse_mode: 'Markdown',
+      });
+    });
+
+    this._bot.onText(/^(?!\/help).*$/, async msg => {
       const recipient = msg.chat.id;
       await this._bot.sendChatAction(recipient, 'upload_photo');
       const query = msg.text.toLowerCase().trim();
@@ -72,13 +79,6 @@ class Bot {
           await this.sendNoResultsFound(recipient);
         }
       }
-    });
-
-    this._bot.onText(/\/help/, async msg => {
-      const reply = Bot._getHelpMessage();
-      await this._bot.sendMessage(msg.chat.id, reply, {
-        parse_mode: 'Markdown',
-      });
     });
   }
 
