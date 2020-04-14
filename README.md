@@ -1,8 +1,7 @@
 # librodecocina
-![](https://media.giphy.com/media/zzX3QOVa4qvte/giphy.gif)
 **Libro De Cocina** is `recipe book` in Spanish.
 This app is a simple implementation of retrieving recipes from [r/GifRecipes](https://www.reddit.com/r/GifRecipes/).
-
+![Alt_Text](https://media.giphy.com/media/zzX3QOVa4qvte/giphy.gif)
 
 ## Application
 The app has two components: _a simple api & a telegram bot_.
@@ -52,8 +51,8 @@ https://t.me/LookForRecipeBot
 
 #### Features
 Send any keyword and (_hopefully, if there are matches_) it will reply something like this:
+![Alt Text](https://i.giphy.com/media/104jNEKMbRwpzO/giphy.webp)
 
-![](https://media.giphy.com/media/104jNEKMbRwpzO/giphy.gif)
 *_let's hope it'll respond with legit recipes_ 😅
 
 #### Bot Keywords
