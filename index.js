@@ -37,20 +37,18 @@ async function main() {
     validateConfig(config);
 
     const reddit = new Reddit(config.reddit);
-    reddit.init();
+    await reddit.init();
 
     const bot = new Bot({ ...config.app, ...config.bot }, { reddit });
-    bot.init();
+    await bot.init();
 
     const server = new Server(
       { ...config.app, ...config.bot },
       { reddit, bot },
     );
 
-    reddit.init();
-    bot.init();
-    server.init();
-    server.start();
+    await server.init();
+    await server.start();
   } catch (e) {
     pino.error(e, '[App] An error occured');
   }

@@ -28,9 +28,9 @@ class Server {
 
   /**
    * Initializies server
-   * @returns {undefined}
+   * @returns {Promise}
    */
-  init() {
+  async init() {
     pino.info('[Server] Initializing server...');
 
     this._app.use(bodyparser.urlencoded({ extended: false }));
@@ -67,7 +67,7 @@ class Server {
 
   /**
    * Starts server
-   * @returns {undefined}
+   * @returns {Promise}
    */
   async start() {
     this._app.listen(this._port, '0.0.0.0', () => {

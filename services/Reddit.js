@@ -29,9 +29,8 @@ class Reddit {
    * Initializies reddit service
    * @returns {undefined}
    */
-  init() {
+  async init() {
     pino.info('[Reddit] Initializing reddit querier...');
-
     this._r = new Snoowrap(this._rcredentials);
   }
 
@@ -40,12 +39,12 @@ class Reddit {
    * Searches in r/gifrecipes subreddit
    *
    * @param {String} q keyword to search
-   * @param {Integer} count number of results to return
-   * @returns {Object} result result set
+   * @param {Integer} count number of results to return, defaults to `1`
+   *
+   * @returns {Object|null} result object or null when error
    * @returns {String} result.title Title of recipe
-   * @returns {String} result.url URL of gif
-   * @returns {null} returns null when no valid result
-   *                 is retrieved or error is encountered
+   * @returns {String} result.url URL of recipe
+   * @returns {String} result.gif Valid gif url
    */
   async getRecipes(q, count = 1) {
     try {
@@ -105,10 +104,23 @@ class Reddit {
     return recipes;
   }
 
+  /**
+   * Returns if url is a gif url
+   * @param {String} url
+   * @returns {Boolean}
+   */
   static isGifUrl(url) {
     return url.match(/\.(gif|gifv)$/) !== null;
   }
 
+  /**
+   * Parses the result from reddit and gets `url` and `media`
+   * Sets an alternate url from `media.oembed.thumbnail_url`
+   * Returns valid url or null when both url and alternate are invalid
+   *
+   * @param {Object} result
+   * @returns {String|null}
+   */
   static getValidGifUrl(result) {
     const { url, media } = result;
     let alternativeUrl = _.get(media, 'oembed.thumbnail_url', '');

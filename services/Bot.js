@@ -25,9 +25,9 @@ class Bot {
 
   /**
    * Initializies telegram bot service
-   * @returns {undefined}
+   * @returns {Promise}
    */
-  init() {
+  async init() {
     pino.info('[Bot] Initializing bot...');
 
     if (this._env === 'production') {
@@ -37,62 +37,102 @@ class Bot {
       this._bot = new TelegramBot(this._token, { polling: true });
     }
 
-    this._bot.onText(/\/help/, async msg => {
-      const reply = Bot._getHelpMessage();
-      await this._bot.sendMessage(msg.chat.id, reply, {
-        parse_mode: 'Markdown',
-      });
+    this._bot.onText(/\/(help|start)/, async m => this._processHelpMessage(m));
+    this._bot.onText(/^(?!\/(help|start)).*$/, async m =>
+      this._processAnyMessage(m),
+    );
+  }
+
+  /**
+   * Function to call for webhook
+   * starts with anything except "/help" or "/start"
+   *
+   * @param {Object} request
+   * @returns {Promise}
+   */
+  async processUpdate(request) {
+    this._bot.processUpdate(request);
+  }
+
+  /**
+   * Callback function for bot.onText when keyword
+   * starts with "/help" or "/start"
+   *
+   * @param {Object} msg
+   * @returns {Promise}
+   */
+  async _processHelpMessage(msg) {
+    const reply = Bot._getHelpMessage();
+    this._bot.sendMessage(msg.chat.id, reply, {
+      parse_mode: 'Markdown',
     });
+  }
 
-    this._bot.onText(/^(?!\/help).*$/, async msg => {
-      const recipient = msg.chat.id;
-      await this._bot.sendChatAction(recipient, 'upload_photo');
-      const query = msg.text.toLowerCase().trim();
+  /**
+   * Callback function for bot.onText when keyword
+   * starts with anything except "/help" or "/start"
+   *
+   * Triggers call to `sendChatAction` which shows "Sending Photo..."
+   * Then calls Reddit Service (`this._source`) for results
+   * Queries for max of 5 recipes so that we have spare results
+   * to send in case `bot.sendVideo` throws an error
+   * When no results are returned or all calls to sendDocument fails,
+   * it calls send default no results found msg
+   *
+   * @param {Object} msg
+   * @returns {Promise}
+   */
+  async _processAnyMessage(msg) {
+    const recipient = msg.chat.id;
+    await this._bot.sendChatAction(recipient, 'upload_photo');
+    const query = msg.text.toLowerCase().trim();
 
-      const recipes = await this._source.getRecipes(query, 5);
+    const recipes = await this._source.getRecipes(query, 5);
 
-      if (recipes.length === 0) {
-        await this._sendNoResultsFound(recipient);
-      } else {
-        let success = false;
-        for (const r of recipes) {
-          let error = false;
+    if (recipes.length === 0) {
+      await this._sendNoResultsFound(recipient);
+    } else {
+      let success = false;
+      for (const r of recipes) {
+        let error = false;
 
-          try {
-            await this._bot.sendDocument(recipient, r.gif, {
-              caption: Bot._getCaption(r.title, r.url),
-              parse_mode: 'Markdown',
-            });
-          } catch (e) {
-            error = true;
-            pino.error(e, '[Bot] Error in sending gif');
-          }
-
-          if (!error) {
-            pino.info('[Bot] Successfully sent message');
-            success = true;
-            break;
-          }
+        try {
+          await this._bot.sendVideo(recipient, r.gif, {
+            caption: Bot._getCaption(r.title, r.url),
+            parse_mode: 'Markdown',
+          });
+        } catch (e) {
+          error = true;
+          pino.error(e, '[Bot] Error in sending gif');
         }
 
-        if (!success) {
-          await this.sendNoResultsFound(recipient);
+        if (!error) {
+          pino.info('[Bot] Successfully sent message');
+          success = true;
+          break;
         }
       }
-    });
+
+      if (!success) {
+        await this._sendNoResultsFound(recipient);
+      }
+    }
   }
 
-  async processUpdate(request) {
-    return this._bot.processUpdate(request);
-  }
-
+  /**
+   * Sends default no results found msg to user
+   * Calls `bot.sendMessage`
+   *
+   * @param {Integer} recipient
+   * @returns {Promise}
+   */
   async _sendNoResultsFound(recipient) {
     pino.info('[Bot] No results found. Successfully sent message.');
     const message =
       '🍔🍽🍕\n*LookForRecipes*\n\n' +
       '😔 Sorry! Cant seem to find a match, please try to search for a different keyword';
 
-    return this._bot.sendMessage(recipient, message, {
+    this._bot.sendMessage(recipient, message, {
       parse_mode: 'Markdown',
     });
   }
